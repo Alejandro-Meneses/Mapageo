@@ -1,10 +1,9 @@
-// Crear el mapa
-const map = L.map('map').setView([0, 0], 2); // Centrado en el mundo con zoom global
+// Crea el mapa
+const map = L.map('map').setView([0, 0], 2);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
-
 // Función para agregar un marcador al mapa
 function agregarMarcador(lat, lon, popupInfo) {
   const marker = L.marker([lat, lon]).addTo(map);
