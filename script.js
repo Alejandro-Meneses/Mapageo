@@ -50,10 +50,8 @@ fetch('http://ip-api.com/json/')
       <b>Ciudad:</b> ${city}
     `);
 
-    // Centrar el mapa en la ubicación del usuario
-    map.setView([lat, lon], 5);
+    
   })
   .catch(error => console.error('Error al obtener datos de geolocalización:', error));
 
-// Cargar marcadores guardados al cargar la página
 cargarMarcadoresGuardados();
