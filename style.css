@@ -53,3 +53,22 @@ header {
 #controls button:hover {
   background-color: #555;
 }
+
+.location-point {
+  fill: red;
+  stroke: white;
+  stroke-width: 1px;
+  cursor: pointer;
+}
+
+.tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px;
+  border-radius: 3px;
+  font-size: 14px;
+  display: none;
+  pointer-events: none;
+  z-index: 10;
+}
