@@ -1,17 +1,54 @@
-// Crea el mapa
-const map = L.map('map').setView([0, 0], 2);
+//Escalado del mapa
+let scale = 150; // Escalado medio
+const minScale = 100; //Zoom minimo
+const maxScale = 300; // zoom maximo
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
-// Función para agregar un marcador al mapa
-function agregarMarcador(lat, lon, popupInfo) {
-  const marker = L.marker([lat, lon]).addTo(map);
-  marker.bindPopup(popupInfo).openPopup();
+// Select SVG and define dimensions
+const svg = d3.select("#map");
+const width = parseInt(svg.style("width"));
+const height = parseInt(svg.style("height"));
+
+// Projection and path
+const projection = d3.geoMercator().scale(scale).translate([width / 2, height / 2]);
+let path = d3.geoPath().projection(projection);
+
+// Render map
+function renderMap() {
+  d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson").then(data => {
+    svg.selectAll("path").remove(); // Clear existing paths
+    svg.selectAll("path")
+      .data(data.features)
+      .enter()
+      .append("path")
+      .attr("d", path)
+      .attr("class", "land")
+      .attr("fill", "black");
+  });
 }
 
+// Initial render
+renderMap();
+
+// Handle zoom buttons
+document.getElementById("zoom-in").addEventListener("click", () => {
+  if (scale < maxScale) {
+    scale += 20; // Increase scale
+    projection.scale(scale);
+    renderMap();
+  }
+});
+
+document.getElementById("zoom-out").addEventListener("click", () => {
+  if (scale > minScale) {
+    scale -= 20; // Decrease scale
+    projection.scale(scale);
+    renderMap();
+  }
+});
+
+
 // Cargar ubicaciones guardadas en Local Storage y mostrarlas en el mapa
-function cargarMarcadoresGuardados() {
+/*function cargarMarcadoresGuardados() {
   const visitasGuardadas = JSON.parse(localStorage.getItem('visitas')) || [];
   visitasGuardadas.forEach(visita => {
     agregarMarcador(visita.lat, visita.lon, `
@@ -54,4 +91,4 @@ fetch('http://ip-api.com/json/')
   })
   .catch(error => console.error('Error al obtener datos de geolocalización:', error));
 
-cargarMarcadoresGuardados();
+cargarMarcadoresGuardados();*/
