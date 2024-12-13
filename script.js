@@ -8,14 +8,13 @@ let isDragging = false; // Bandera para rastrear si el usuario está arrastrando
 let startPoint = [0, 0]; // Posición inicial del ratón al hacer clic
 
 // Seleccionar el elemento SVG y definir sus dimensiones
-const svg = d3.select("#map"); // Selecciona el SVG con el id "map"
-const mapContainer = document.getElementById("map-container"); // Contenedor del mapa
-const width = parseInt(svg.style("width")); // Obtiene el ancho del SVG en píxeles
-const height = parseInt(svg.style("height")); // Obtiene la altura del SVG en píxeles
+const svg = d3.select("#map"); 
+const mapContainer = document.getElementById("map-container"); 
+const width = parseInt(svg.style("width")); 
+const height = parseInt(svg.style("height")); 
 
 // Crear un tooltip
 const tooltip = d3.select("body").append("div").attr("class", "tooltip"); 
-// Agrega un div al body con la clase "tooltip" para mostrar información flotante
 
 // Proyección y trayectoria
 const projection = d3.geoMercator() // Define una proyección Mercator para el mapa
@@ -29,13 +28,13 @@ function renderMap() {
     svg.selectAll("path").remove(); // Limpia cualquier trayectoria existente en el mapa
     svg.selectAll("circle").remove(); // Limpia cualquier círculo existente (como el marcador)
 
-    svg.selectAll("path") // Selecciona todas las trayectorias
-      .data(data.features) // Asocia los datos GeoJSON con los elementos
-      .enter() // Crea nuevos elementos para cada dato
-      .append("path") // Agrega un elemento <path> al SVG para cada país
-      .attr("d", path) // Define la forma de cada país utilizando la proyección
-      .attr("class", "land") // Asigna una clase CSS "land" a los caminos
-      .attr("fill", "black"); // Rellena los caminos con color negro
+    svg.selectAll("path") 
+      .data(data.features)
+      .enter()
+      .append("path") 
+      .attr("d", path) 
+      .attr("class", "land") 
+      .attr("fill", "black"); 
 
     renderLocation(); // Llama a la función para agregar ubicaciones específicas
   });
@@ -93,7 +92,7 @@ document.getElementById("zoom-out").addEventListener("click", () => {
   }
 });
 
-// Agregar funcionalidad de "drag and pan" con cambio de cursor
+// Agregar funcionalidad de drag and pan
 svg.on("mousedown", (event) => {
   isDragging = true;
   startPoint = [event.clientX, event.clientY];
