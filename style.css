@@ -72,3 +72,11 @@ header {
   pointer-events: none;
   z-index: 10;
 }
+
+#map-container {
+  cursor: grab; 
+}
+
+#map-container.grabbing {
+  cursor: grabbing; 
+}
