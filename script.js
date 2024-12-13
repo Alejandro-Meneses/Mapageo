@@ -89,7 +89,12 @@ document.getElementById("zoom-out").addEventListener("click", () => {
   }
 });
 
-// Agregar funcionalidad de drag and pan
+// Función para limitar los valores de traslación
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+// Agregar funcionalidad de drag and pan con límites
 svg.on("mousedown", (event) => {
   isDragging = true;
   startPoint = [event.clientX, event.clientY];
@@ -101,9 +106,19 @@ svg.on("mousemove", (event) => {
     const dx = event.clientX - startPoint[0];
     const dy = event.clientY - startPoint[1];
 
-    translate[0] += dx;
-    translate[1] += dy;
+    // Calcular los límites del mapa dentro del contenedor
+    const mapBounds = {
+      minX: -(width * (scale / 150)) + mapContainer.offsetWidth / 2,
+      maxX: width * (scale / 150) - mapContainer.offsetWidth / 2,
+      minY: -(height * (scale / 150)) + mapContainer.offsetHeight / 2,
+      maxY: height * (scale / 150) - mapContainer.offsetHeight / 2,
+    };
 
+    // Actualizar las traslaciones con límites
+    translate[0] = clamp(translate[0] + dx, mapBounds.minX, mapBounds.maxX);
+    translate[1] = clamp(translate[1] + dy, mapBounds.minY, mapBounds.maxY);
+
+    // Actualizar la proyección con la nueva traslación
     projection.translate([
       width / 2 + translate[0],
       height / 2 + translate[1],
@@ -124,44 +139,26 @@ svg.on("mouseleave", () => {
   mapContainer.classList.remove("grabbing");
 });
 
-// Función para obtener la IP del usuario y su ubicación
-async function fetchUserLocation() {
-  try {
-    // Obtener la IP del usuario
-    const ipResponse = await fetch("https://api.ipify.org?format=json");
-    const { ip } = await ipResponse.json();
+// Agregar funcionalidad de zoom con la rueda del ratón
+svg.on("wheel", (event) => {
+  event.preventDefault();
 
-    // Obtener la ubicación basada en la IP
-    const locationResponse = await fetch(`http://ip-api.com/json/${ip}`);
-    const locationData = await locationResponse.json();
-
-    // Procesar los datos de ubicación
-    if (locationData.status === "success") {
-      const userLocation = {
-        ip: locationData.query,
-        coordinates: [locationData.lon, locationData.lat],
-        country: locationData.country,
-        region: locationData.regionName,
-        city: locationData.city,
-        zip: locationData.zip,
-        isp: locationData.isp,
-      };
-
-      // Agregar la ubicación al arreglo global
-      locations.push(userLocation);
-
-      // Renderizar los puntos nuevamente
-      renderLocations();
-    } else {
-      console.error("No se pudo obtener la ubicación de la IP.");
-    }
-  } catch (error) {
-    console.error("Error al obtener la IP o la ubicación:", error);
+  const zoomStep = 20; // Incremento o decremento de la escala por paso
+  if (event.deltaY < 0 && scale < maxScale) {
+    scale += zoomStep;
+  } else if (event.deltaY > 0 && scale > minScale) {
+    scale -= zoomStep;
   }
-}
+
+  projection.scale(scale);
+  renderMap();
+});
 
 // Renderizado inicial del mapa
 renderMap();
 
-// Obtener y mostrar la ubicación del usuario
-fetchUserLocation();
+// Obtener y mostrar las ubicaciones desde el archivo externo
+fetchLocations(ipList, (fetchedLocations) => {
+  locations = fetchedLocations; // Actualizar las ubicaciones globales
+  renderLocations(); // Renderizar los puntos
+});
