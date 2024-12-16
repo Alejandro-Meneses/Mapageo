@@ -1,57 +1,40 @@
-// Crea el mapa
+// Configuración de Leaflet para mostrar el mapa
 const map = L.map('map').setView([0, 0], 2);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
+
 // Función para agregar un marcador al mapa
 function agregarMarcador(lat, lon, popupInfo) {
   const marker = L.marker([lat, lon]).addTo(map);
   marker.bindPopup(popupInfo).openPopup();
 }
 
-// Cargar ubicaciones guardadas en Local Storage y mostrarlas en el mapa
-function cargarMarcadoresGuardados() {
-  const visitasGuardadas = JSON.parse(localStorage.getItem('visitas')) || [];
-  visitasGuardadas.forEach(visita => {
-    agregarMarcador(visita.lat, visita.lon, `
-      <b>País:</b> ${visita.pais}<br>
-      <b>Ciudad:</b> ${visita.ciudad}
-    `);
-  });
-}
+// WebSocket para recibir datos en tiempo real
+const socket = new WebSocket('ws://localhost:8080');
 
-// Guardar una nueva visita en Local Storage
-function guardarVisita(visita) {
-  const visitas = JSON.parse(localStorage.getItem('visitas')) || [];
-  visitas.push(visita);
-  localStorage.setItem('visitas', JSON.stringify(visitas));
-}
+socket.onopen = () => {
+  console.log('Conexión WebSocket abierta');
+};
 
-// Obtener la geolocalización del usuario actual y agregar un marcador
-fetch('http://ip-api.com/json/')
-  .then(response => response.json())
-  .then(data => {
-    const { lat, lon, city, country } = data;
+socket.onmessage = (event) => {
+  console.log('Conexión WebSocket abierta');
 
-    // Crear la información de la visita
-    const nuevaVisita = {
-      pais: country,
-      ciudad: city,
-      lat: lat,
-      lon: lon
-    };
+  const visita = JSON.parse(event.data);
 
-    guardarVisita(nuevaVisita);
+  // Agregar marcador al mapa
+  agregarMarcador(visita.lat, visita.lon, `
+    <b>País:</b> ${visita.pais}<br>
+    <b>Ciudad:</b> ${visita.ciudad}
+  `);
+  console.log('Nueva visita recibida:', visita);
+};
 
-    // Agregar marcador al mapa
-    agregarMarcador(lat, lon, `
-      <b>País:</b> ${country}<br>
-      <b>Ciudad:</b> ${city}
-    `);
+socket.onerror = (error) => {
+  console.error('Error en WebSocket:', error);
+};
 
-    
-  })
-  .catch(error => console.error('Error al obtener datos de geolocalización:', error));
-
-cargarMarcadoresGuardados();
+socket.onclose = () => {
+  console.log('Conexión WebSocket cerrada');
+};
