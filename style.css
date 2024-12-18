@@ -1,82 +1,27 @@
-/* Estilo general */
+/* Establecer el fondo de la página en negro */
 body {
-  font-family: Arial, sans-serif;
+  background-color: black;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
-header {
-  background-color: #333;
-  color: white;
-  padding: 10px 20px;
-  text-align: center;
-  width: 100%;
-}
-
+/* Contenedor del mapa con fondo blanco */
 #map-container {
-  position: relative;
-  width: 90%;
-  max-width: 1000px;
-  height: 80vh;
-  margin: 20px auto;
-  border: 2px solid #333;
+  background-color: white;
+  width: 100%;
+  height: 100vh;
 }
 
+/* El mapa ocupará todo el espacio dentro del contenedor */
 #map {
-  display: block;
-  width: 100%;
   height: 100%;
 }
 
-#controls {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  display: flex;
-  flex-direction: column;
+/* Cambiar el cursor cuando se está arrastrando el mapa */
+.leaflet-container {
+  cursor: grab;
 }
 
-#controls button {
-  background-color: #333;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  margin: 5px 0;
-  cursor: pointer;
-  font-size: 16px;
-  border-radius: 5px;
-}
-
-#controls button:hover {
-  background-color: #555;
-}
-
-.location-point {
-  fill: red;
-  stroke: white;
-  stroke-width: 1px;
-  cursor: pointer;
-}
-
-.tooltip {
-  position: absolute;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 5px;
-  border-radius: 3px;
-  font-size: 14px;
-  display: none;
-  pointer-events: none;
-  z-index: 10;
-}
-
-#map-container {
-  cursor: grab; 
-}
-
-#map-container.grabbing {
-  cursor: grabbing; 
+.leaflet-container.leaflet-grabbing {
+  cursor: grabbing;
 }
