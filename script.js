@@ -21,6 +21,13 @@ const projection = d3.geoMercator()
 
 const path = d3.geoPath().projection(projection);
 
+// Variables para controlar el arrastre
+let isDragging = false;
+let previousX, previousY;
+
+// Variables para los límites del mapa
+let mapWidth, mapHeight;
+
 // Actualizar dimensiones dinámicamente
 function updateContainerSize() {
   containerWidth = container.clientWidth;
@@ -29,6 +36,54 @@ function updateContainerSize() {
   projection.translate([containerWidth / 2, containerHeight / 2]);
   renderMap();
 }
+
+// Iniciar el arrastre
+svg.on("mousedown", (event) => {
+  isDragging = true;
+  previousX = event.clientX;
+  previousY = event.clientY;
+  svg.style("cursor", "grabbing"); // Cambiar el cursor al arrastrar
+});
+
+// Mover el mapa mientras se arrastra
+svg.on("mousemove", (event) => {
+  if (isDragging) {
+    const deltaX = event.clientX - previousX;
+    const deltaY = event.clientY - previousY;
+
+    // Obtener las coordenadas actuales de la proyección
+    const [currentX, currentY] = projection.translate();
+
+    // Calcular las nuevas coordenadas
+    let newX = currentX + deltaX;
+    let newY = currentY + deltaY;
+
+    // Restringir el movimiento dentro de los límites del mapa
+    newX = Math.max(Math.min(newX, mapWidth - containerWidth / 2), containerWidth / 2);
+    newY = Math.max(Math.min(newY, mapHeight - containerHeight / 2), containerHeight / 2);
+
+    // Actualizar la traducción de la proyección
+    projection.translate([newX, newY]);
+
+    renderMap(); // Volver a renderizar el mapa con la nueva posición
+
+    // Actualizar las posiciones anteriores
+    previousX = event.clientX;
+    previousY = event.clientY;
+  }
+});
+
+// Detener el arrastre
+svg.on("mouseup", () => {
+  isDragging = false;
+  svg.style("cursor", "grab"); // Cambiar el cursor al soltar
+});
+
+// Prevenir el arrastre accidental cuando no se está haciendo click
+svg.on("mouseleave", () => {
+  isDragging = false;
+  svg.style("cursor", "grab"); // Cambiar el cursor al salir
+});
 
 // Renderizar el mapa
 function renderMap() {
@@ -45,6 +100,11 @@ function renderMap() {
       .attr("fill", "#333")
       .attr("stroke", "white")
       .attr("stroke-width", 0.5);
+
+    // Obtener los límites del mapa
+    const bounds = path.bounds(data);
+    mapWidth = bounds[1][0] - bounds[0][0];
+    mapHeight = bounds[1][1] - bounds[0][1];
 
     renderLocations();
   }).catch((error) => console.error("Error al cargar el mapa:", error));
