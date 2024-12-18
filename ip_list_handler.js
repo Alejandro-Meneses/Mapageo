@@ -1,21 +1,30 @@
-// Lista de IPs con sus ubicaciones (esto sería dinámico en un caso real, pero aquí es estático para la demostración)
-const ipData = [
-  { ip: '192.168.1.1', lat: 51.505, lon: -0.09, country: 'Reino Unido', province: 'Londres', city: 'Londres' },
-  { ip: '192.168.1.2', lat: 48.8566, lon: 2.3522, country: 'Francia', province: 'Île-de-France', city: 'París' },
-  { ip: '192.168.1.3', lat: 40.7128, lon: -74.0060, country: 'EE.UU.', province: 'Nueva York', city: 'Nueva York' }
-];
+// Archivo: ip_list_handler.js
+const ipList = ["8.8.8.8", "1.1.1.1", "208.67.222.222", "185.228.168.9", "64.6.65.6"];
 
-// Añadir los puntos de las IPs al mapa después de que se cargue el mapa
-window.onload = function() {
-  ipData.forEach(data => {
-      const marker = L.marker([data.lat, data.lon]).addTo(map);
+async function fetchLocations(callback) {
+  const fetchedLocations = [];
 
-      // Mostrar información al pasar el ratón por encima
-      marker.bindPopup(`
-          <strong>IP:</strong> ${data.ip}<br>
-          <strong>País:</strong> ${data.country}<br>
-          <strong>Provincia:</strong> ${data.province}<br>
-          <strong>Ciudad:</strong> ${data.city}
-      `);
-  });
-};
+  for (const ip of ipList) {
+    try {
+      const response = await fetch(`http://ip-api.com/json/${ip}`);
+      const data = await response.json();
+
+      if (data.status === "success" && data.lon && data.lat) {
+        fetchedLocations.push({
+          ip: data.query,
+          coordinates: [data.lon, data.lat],
+          country: data.country || "Desconocido",
+          region: data.regionName || "Desconocido",
+          city: data.city || "Desconocido",
+        });
+      } else {
+        console.error(`No se pudo obtener datos válidos para la IP: ${ip}`);
+      }
+    } catch (error) {
+      console.error(`Error al obtener datos de la IP ${ip}:`, error);
+    }
+  }
+
+  console.log("Ubicaciones obtenidas:", fetchedLocations);
+  callback(fetchedLocations);
+}
