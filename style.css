@@ -12,18 +12,9 @@ body {
   min-height: 100vh; /* Ocupar toda la altura de la pantalla */
 }
 
-#map-container {
-  width: 100%;
-  height: 90vh;
-  margin: 0 auto;
-  overflow: hidden;
-  cursor: grab;
-}
-
 #map-container.grabbing {
   cursor: grabbing;
 }
-
 
 /* Tooltip estilizado */
 .tooltip {

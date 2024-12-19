@@ -1,114 +1,76 @@
-// script.js
+// Conexión al WebSocket del servidor
+const socket = new WebSocket('ws://localhost:8080'); // Dirección del servidor WebSocket
 
-// Importar la función fetchLocations desde send.js
-import { fetchLocations } from './send.js';
-
-// Configuración inicial
-let scale = 100; // Zoom inicial
-const minScale = 100; // Zoom mínimo
-const maxScale = 1000; // Zoom máximo
-
-let locations = []; // Almacena las ubicaciones de las IPs
-
-// Selección del SVG y el tooltip
-const svg = d3.select("#map");
-const tooltip = d3.select("body").append("div").attr("class", "tooltip");
-
-// Tamaño del contenedor
-const container = document.getElementById("map-container");
-let containerWidth = container.clientWidth;
-let containerHeight = container.clientHeight;
-
-// Configuración de la proyección dinámica
-const projection = d3.geoMercator()
-  .scale(scale)
-  .translate([containerWidth / 2, containerHeight / 2]);
-
-const path = d3.geoPath().projection(projection);
-
-// Renderizar el mapa
-function renderMap() {
-  const geoJsonUrl = "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson";
-
-  d3.json(geoJsonUrl).then((data) => {
-    svg.selectAll("path").remove();
-
-    svg.selectAll("path")
-      .data(data.features)
-      .enter()
-      .append("path")
-      .attr("d", path)
-      .attr("fill", "#333")
-      .attr("stroke", "white")
-      .attr("stroke-width", 0.5);
-
-    renderLocations();
-  }).catch((error) => console.error("Error al cargar el mapa:", error));
-}
-
-// Renderizar puntos de ubicación
-function renderLocations() {
-  svg.selectAll(".location-point").remove();
-
-  locations.forEach((location) => {
-    const [x, y] = projection(location.coordinates);
-    if (x && y) {
-      svg.append("circle")
-        .attr("class", "location-point")
-        .attr("cx", x)
-        .attr("cy", y)
-        .attr("r", 6)
-        .style("fill", "red")
-        .style("stroke", "white")
-        .style("stroke-width", 1)
-        .on("mouseover", (event) => {
-          tooltip.style("display", "block")
-            .style("left", `${event.pageX + 10}px`)
-            .style("top", `${event.pageY + 10}px`)
-            .html(`
-              <div>
-                <strong>País:</strong> ${location.country}<br>
-                <strong>Provincia:</strong> ${location.region}<br>
-                <strong>Ciudad:</strong> ${location.city}
-              </div>
-            `);
-        })
-        .on("mouseout", () => {
-          tooltip.style("display", "none");
-        });
-    }
-  });
-}
-
-// Inicializar el mapa y obtener ubicaciones
-fetchLocations((fetchedLocations) => {
-  locations = fetchedLocations;
-  renderMap();
-});
-
-// Conectar con el servidor WebSocket
-const socket = new WebSocket('ws://localhost:3000');
-
-socket.onopen = () => {
+// Cuando se abre la conexión WebSocket
+socket.onopen = function() {
   console.log('Conexión WebSocket establecida');
 };
 
-socket.onmessage = (event) => {
-  const message = JSON.parse(event.data);
-  console.log('Mensaje recibido del servidor:', message);
-
-  if (message.type === 'location') {
-    locations.push(message.data);
-    renderLocations();
+// Cuando se recibe un mensaje desde el servidor WebSocket
+socket.onmessage = function(event) {
+  const data = JSON.parse(event.data);
+  
+  // Comprobar si los datos contienen la propiedad 'locations'
+  if (data.locations && Array.isArray(data.locations)) {
+    locations = data.locations; // Actualizar las ubicaciones
+    renderMap(); // Volver a renderizar el mapa con las nuevas ubicaciones
   }
 };
 
-socket.onclose = () => {
+// Cuando ocurre un error en la conexión WebSocket
+socket.onerror = function(error) {
+  console.error('Error en WebSocket:', error);
+};
+
+// Cuando se cierra la conexión WebSocket
+socket.onclose = function() {
   console.log('Conexión WebSocket cerrada');
 };
 
-// Inicializar
-updateContainerSize();
-renderMap();
+// Arreglo de ubicaciones que se van a mostrar en el mapa
+let locations = [];
 
-window.addEventListener("resize", updateContainerSize);
+// Función para inicializar y renderizar el mapa (usando Leaflet.js en este ejemplo)
+let map;
+function renderMap() {
+  if (typeof L !== 'undefined') {
+    // Inicializar el mapa solo si no está inicializado
+    if (!map) {
+      map = L.map('map').setView([19.4326, -99.1332], 13); // Coordenadas iniciales (Ciudad de México)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    }
+
+    // Limpiar los marcadores anteriores
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.Marker) {
+        map.removeLayer(layer);
+      }
+    });
+
+    // Agregar nuevos marcadores al mapa con las ubicaciones recibidas
+    locations.forEach(location => {
+      const { coordinates, country, region, city } = location;
+      L.marker([coordinates[1], coordinates[0]])
+        .addTo(map)
+        .bindPopup(`<b>${city}</b><br>${region}, ${country}`);
+    });
+  }
+}
+
+// Función para enviar una solicitud al servidor (puedes llamarla si necesitas obtener ubicaciones)
+async function fetchLocations() {
+  try {
+    const response = await fetch('/api/locations'); // Ruta para obtener las ubicaciones
+    const data = await response.json();
+    
+    if (data.locations) {
+      locations = data.locations; // Actualizar el arreglo de ubicaciones
+      renderMap(); // Volver a renderizar el mapa con las nuevas ubicaciones
+    }
+  } catch (error) {
+    console.error('Error al obtener las ubicaciones:', error);
+  }
+}
+
+// Llamar a la función para obtener ubicaciones al cargar la página (opcional)
+fetchLocations();
