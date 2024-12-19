@@ -169,3 +169,29 @@ fetchLocations((fetchedLocations) => {
   locations = fetchedLocations;
   renderMap();
 });
+// Conectar con el servidor WebSocket
+const socket = new WebSocket('ws://localhost:3000');
+
+socket.onopen = () => {
+  console.log('Conexión WebSocket establecida');
+};
+
+socket.onmessage = (event) => {
+  const message = JSON.parse(event.data);
+  console.log('Mensaje recibido del servidor:', message);
+
+  if (message.type === 'location') {
+    locations.push(message.data);
+    renderLocations();
+  }
+};
+
+socket.onclose = () => {
+  console.log('Conexión WebSocket cerrada');
+};
+
+// Inicializar
+updateContainerSize();
+renderMap();
+
+window.addEventListener("resize", updateContainerSize);
