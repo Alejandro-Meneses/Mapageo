@@ -1,3 +1,5 @@
+import { sendLocation } from './send.js';  // Ajusta la ruta según sea necesario
+
 // Configuración inicial
 let scale = 100; // Zoom inicial
 const minScale = 100; // Zoom mínimo
@@ -168,4 +170,7 @@ function enforceBoundaries() {
 fetchLocations((fetchedLocations) => {
   locations = fetchedLocations;
   renderMap();
+  
+  // Llamar a la función sendLocation para enviar la IP y ubicación
+  sendLocation();
 });
