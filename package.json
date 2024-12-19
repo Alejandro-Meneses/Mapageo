@@ -1,5 +1,18 @@
 {
   "dependencies": {
-    "amqplib": "^0.10.5"
-  }
+    "amqplib": "^0.10.5",
+    "express": "^4.21.2"
+  },
+  "name": "mapageo",
+  "version": "1.0.0",
+  "main": "ip_list_handler.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
 }
