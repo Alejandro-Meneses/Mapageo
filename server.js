@@ -8,7 +8,7 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 const RABBITMQ_URL = 'amqp://localhost';
-const QUEUE_NAME = 'map_updates';
+const QUEUE_NAME = 'Mapa';
 
 wss.on('connection', (ws) => {
   console.log('Cliente conectado');

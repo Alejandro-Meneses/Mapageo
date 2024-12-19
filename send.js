@@ -1,7 +1,7 @@
 const amqp = require('amqplib');
 
 const RABBITMQ_URL = 'amqp://localhost'; // URL de RabbitMQ
-const QUEUE_NAME = 'map_updates'; // Nombre de la cola
+const QUEUE_NAME = 'Mapa'; // Nombre de la cola
 
 // Ejemplo de mensajes con datos de diferentes ubicaciones
 const messages = [
