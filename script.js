@@ -1,5 +1,5 @@
-// Dimensiones y escala inicial del mapa
-let scale = 200; // Escala inicial
+// Configuración inicial
+let scale = 100; // Zoom inicial
 const minScale = 100; // Zoom mínimo
 const maxScale = 1000; // Zoom máximo
 
@@ -21,69 +21,10 @@ const projection = d3.geoMercator()
 
 const path = d3.geoPath().projection(projection);
 
-// Variables para controlar el arrastre
+// Variables para arrastrar el mapa
 let isDragging = false;
-let previousX, previousY;
-
-// Variables para los límites del mapa
-let mapWidth, mapHeight;
-
-// Actualizar dimensiones dinámicamente
-function updateContainerSize() {
-  containerWidth = container.clientWidth;
-  containerHeight = container.clientHeight;
-
-  projection.translate([containerWidth / 2, containerHeight / 2]);
-  renderMap();
-}
-
-// Iniciar el arrastre
-svg.on("mousedown", (event) => {
-  isDragging = true;
-  previousX = event.clientX;
-  previousY = event.clientY;
-  svg.style("cursor", "grabbing"); // Cambiar el cursor al arrastrar
-});
-
-// Mover el mapa mientras se arrastra
-svg.on("mousemove", (event) => {
-  if (isDragging) {
-    const deltaX = event.clientX - previousX;
-    const deltaY = event.clientY - previousY;
-
-    // Obtener las coordenadas actuales de la proyección
-    const [currentX, currentY] = projection.translate();
-
-    // Calcular las nuevas coordenadas
-    let newX = currentX + deltaX;
-    let newY = currentY + deltaY;
-
-    // Restringir el movimiento dentro de los límites del mapa
-    newX = Math.max(Math.min(newX, mapWidth - containerWidth / 2), containerWidth / 2);
-    newY = Math.max(Math.min(newY, mapHeight - containerHeight / 2), containerHeight / 2);
-
-    // Actualizar la traducción de la proyección
-    projection.translate([newX, newY]);
-
-    renderMap(); // Volver a renderizar el mapa con la nueva posición
-
-    // Actualizar las posiciones anteriores
-    previousX = event.clientX;
-    previousY = event.clientY;
-  }
-});
-
-// Detener el arrastre
-svg.on("mouseup", () => {
-  isDragging = false;
-  svg.style("cursor", "grab"); // Cambiar el cursor al soltar
-});
-
-// Prevenir el arrastre accidental cuando no se está haciendo click
-svg.on("mouseleave", () => {
-  isDragging = false;
-  svg.style("cursor", "grab"); // Cambiar el cursor al salir
-});
+let startX, startY; // Posición inicial del ratón
+let startTranslateX, startTranslateY; // Posición inicial de la proyección
 
 // Renderizar el mapa
 function renderMap() {
@@ -101,16 +42,11 @@ function renderMap() {
       .attr("stroke", "white")
       .attr("stroke-width", 0.5);
 
-    // Obtener los límites del mapa
-    const bounds = path.bounds(data);
-    mapWidth = bounds[1][0] - bounds[0][0];
-    mapHeight = bounds[1][1] - bounds[0][1];
-
     renderLocations();
   }).catch((error) => console.error("Error al cargar el mapa:", error));
 }
 
-// Renderizar puntos de IP
+// Renderizar puntos de ubicación
 function renderLocations() {
   svg.selectAll(".location-point").remove();
 
@@ -144,7 +80,7 @@ function renderLocations() {
   });
 }
 
-// Manejar zoom centrado
+// Manejar zoom en la dirección del ratón
 svg.on("wheel", (event) => {
   event.preventDefault();
 
@@ -154,16 +90,79 @@ svg.on("wheel", (event) => {
   // Ajustar escala con límites
   scale = Math.max(minScale, Math.min(maxScale, scale + (event.deltaY < 0 ? zoomStep : -zoomStep)));
 
-  // Centrar proyección nuevamente
-  projection.scale(scale).translate([containerWidth / 2, containerHeight / 2]);
+  // Calcular posición relativa del ratón
+  const mouseX = event.clientX - container.getBoundingClientRect().left;
+  const mouseY = event.clientY - container.getBoundingClientRect().top;
 
+  // Obtener las coordenadas actuales de la proyección
+  const [currentX, currentY] = projection.translate();
+
+  // Calcular nuevas coordenadas para centrar el zoom en el ratón
+  const factor = scale / oldScale;
+  const newX = currentX - (mouseX - currentX) * (factor - 1);
+  const newY = currentY - (mouseY - currentY) * (factor - 1);
+
+  // Actualizar la proyección
+  projection.scale(scale).translate([newX, newY]);
+
+  enforceBoundaries();
   renderMap();
 });
 
-// Redimensionar la ventana
-window.addEventListener("resize", () => {
-  updateContainerSize();
+// Manejar arrastre del mapa
+svg.on("mousedown", (event) => {
+  isDragging = true;
+  startX = event.clientX;
+  startY = event.clientY;
+
+  const [currentX, currentY] = projection.translate();
+  startTranslateX = currentX;
+  startTranslateY = currentY;
+
+  svg.style("cursor", "grabbing");
 });
+
+svg.on("mousemove", (event) => {
+  if (isDragging) {
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
+
+    const newX = startTranslateX + dx;
+    const newY = startTranslateY + dy;
+
+    projection.translate([newX, newY]);
+    enforceBoundaries();
+    renderMap();
+  }
+});
+
+svg.on("mouseup", () => {
+  isDragging = false;
+  svg.style("cursor", "default");
+});
+
+svg.on("mouseleave", () => {
+  isDragging = false;
+  svg.style("cursor", "default");
+});
+
+// Restringir los límites del mapa
+function enforceBoundaries() {
+  const [translateX, translateY] = projection.translate();
+
+  const scaledWidth = containerWidth * (scale / minScale);
+  const scaledHeight = containerHeight * (scale / minScale);
+
+  const maxX = containerWidth / 2;
+  const minX = containerWidth / 2 - scaledWidth;
+  const maxY = containerHeight / 2;
+  const minY = containerHeight / 2 - scaledHeight;
+
+  const clampedX = Math.max(minX, Math.min(maxX, translateX));
+  const clampedY = Math.max(minY, Math.min(maxY, translateY));
+
+  projection.translate([clampedX, clampedY]);
+}
 
 // Inicializar el mapa y obtener ubicaciones
 fetchLocations((fetchedLocations) => {
