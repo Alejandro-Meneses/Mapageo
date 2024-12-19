@@ -1,9 +1,6 @@
-const amqp = require('amqplib');
+const socket = new WebSocket('ws://localhost:3000'); // Conectar al servidor WebSocket
 
-const RABBITMQ_URL = 'amqp://localhost'; // URL de RabbitMQ
-const QUEUE_NAME = 'Mapa'; // Nombre de la cola
-
-// Ejemplo de mensajes con datos de diferentes ubicaciones
+// Mensajes de ejemplo
 const messages = [
   {
     type: 'location',
@@ -14,66 +11,23 @@ const messages = [
       city: 'Ciudad de México'
     }
   },
-  {
-    type: 'location',
-    data: {
-      coordinates: [-74.006, 40.7128], // Nueva York
-      country: 'Estados Unidos',
-      region: 'Nueva York',
-      city: 'Nueva York'
-    }
-  },
-  {
-    type: 'location',
-    data: {
-      coordinates: [2.3522, 48.8566], // París
-      country: 'Francia',
-      region: 'Île-de-France',
-      city: 'París'
-    }
-  },
-  {
-    type: 'location',
-    data: {
-      coordinates: [139.6917, 35.6895], // Tokio
-      country: 'Japón',
-      region: 'Kantō',
-      city: 'Tokio'
-    }
-  },
-  {
-    type: 'location',
-    data: {
-      coordinates: [151.2093, -33.8688], // Sídney
-      country: 'Australia',
-      region: 'Nueva Gales del Sur',
-      city: 'Sídney'
-    }
-  }
+  // Más mensajes aquí
 ];
 
-async function sendMessages() {
-  try {
-    const connection = await amqp.connect(RABBITMQ_URL);
-    const channel = await connection.createChannel();
+socket.onopen = () => {
+  console.log('Conexión WebSocket establecida');
+  
+  // Enviar mensajes al servidor
+  messages.forEach((message) => {
+    socket.send(JSON.stringify(message));
+    console.log('Mensaje enviado:', message);
+  });
+};
 
-    // Asegurarse de que la cola exista
-    await channel.assertQueue(QUEUE_NAME);
+socket.onmessage = (event) => {
+  console.log('Mensaje recibido:', event.data);
+};
 
-    // Enviar cada mensaje
-    messages.forEach((message) => {
-      channel.sendToQueue(QUEUE_NAME, Buffer.from(JSON.stringify(message)));
-      console.log('Mensaje enviado:', message);
-    });
-
-    // Cerrar la conexión después de enviar los mensajes
-    setTimeout(() => {
-      connection.close();
-      process.exit(0);
-    }, 500);
-  } catch (error) {
-    console.error('Error al enviar los mensajes:', error);
-  }
-}
-
-sendMessages();
+socket.onclose = () => {
+  console.log('Conexión WebSocket cerrada');
+};
