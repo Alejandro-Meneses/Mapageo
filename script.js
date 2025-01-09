@@ -13,6 +13,8 @@ const map = new mapboxgl.Map({
   maxPitch: 0 // Bloquea vista 3D
 });
 
+
+
 // Configuración del WebSocket
 const socket = new WebSocket('ws://localhost:8080');
 
@@ -39,6 +41,7 @@ socket.onerror = (error) => {
 socket.onclose = () => {
   console.log('Conexión WebSocket cerrada');
 };
+detect_ip();
 
 // Función para agregar un marcador al mapa
 function agregarMarcador(lat, lon, popupInfo) {
@@ -68,4 +71,5 @@ function agregarMarcador(lat, lon, popupInfo) {
     .setPopup(new mapboxgl.Popup().setHTML(popupInfo)) // Popup asociado
     .addTo(map);
 }
+
 
